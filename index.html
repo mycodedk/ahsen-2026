@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Deniz & Ahsen — 2026 💌</title>
+
+  <style>
+    :root{
+      --bg:#070a14;
+      --card:#0f1730cc;
+      --text:#f2f5ff;
+      --muted:#c6ccffcc;
+      --line:#ffffff14;
+      --accent:#ff77c8;
+      --accent2:#7cf6ff;
+      --radius:22px;
+      --shadow: 0 20px 60px #00000066;
+      --blur: 1.0px; /* düşük blur */
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* -------- Background: 2x2 canlı kolaj -------- */
+    .bgWrap{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      background:#000;
+      overflow:hidden;
+    }
+
+    .bgGrid{
+      position:absolute;
+      inset:0;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      transform: scale(1.02);
+      transition: transform 12s cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+    }
+    .bgGrid.zoom{ transform: scale(1.12); }
+
+    .tile{
+      position:relative;
+      border-radius: 22px;
+      overflow:hidden;
+      border: 1px solid #ffffff14;
+      background:#111;
+    }
+
+    .layer{
+      position:absolute;
+      inset:0;
+      background-size: cover;
+      background-position: center;
+      background-repeat:no-repeat;
+      opacity:0;
+      transition: opacity 1.2s ease;
+      filter: blur(var(--blur)) saturate(1.05) contrast(1.06);
+      transform: scale(1.08);
+      will-change: opacity, transform;
+    }
+
+    .overlay{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:2;
+      background:
+        radial-gradient(900px 500px at 20% 10%, #3a1b6a55, transparent 60%),
+        radial-gradient(900px 600px at 90% 30%, #006bff33, transparent 60%),
+        linear-gradient(180deg, #00000045, #000000b0);
+      transition: background 1s ease;
+    }
+    body.unlocked .overlay{
+      background:
+        radial-gradient(900px 500px at 20% 10%, #3a1b6a50, transparent 60%),
+        radial-gradient(900px 600px at 90% 30%, #006bff30, transparent 60%),
+        linear-gradient(180deg, #00000035, #00000090);
+    }
+
+    /* Hearts canvas */
+    #hearts{
+      position:absolute;
+      inset:0;
+      z-index:3;
+      pointer-events:none;
+      opacity:0;
+      transition: opacity .6s ease;
+    }
+    body.unlocked #hearts{ opacity:1; }
+
+    @media (prefers-reduced-motion: reduce){
+      .layer{ transition:none; }
+      .bgGrid{ transition:none; }
+      .bgGrid.zoom{ transform: scale(1.02); }
+      #hearts{ display:none; }
+    }
+
+    /* -------- Content -------- */
+    .wrap{
+      position:relative;
+      z-index:5;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding: 28px 16px 50px;
+    }
+
+    .card{
+      width:min(980px, 100%);
+      background: linear-gradient(180deg, #121a33cc, var(--card));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:28px;
+      backdrop-filter: blur(10px);
+    }
+
+    .badge{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#ffffff0d;
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:14px;
+    }
+    .badge.open{
+      color:#0a1b14;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      border-color:transparent;
+    }
+
+    h1{
+      margin:0 0 6px 0;
+      font-size: clamp(28px, 5vw, 44px);
+      letter-spacing:-0.02em;
+    }
+
+    .countdown{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin:18px 0 6px;
+    }
+    .cd{
+      flex:1 1 120px;
+      text-align:center;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px 14px 12px;
+      background:#ffffff0a;
+    }
+    .cd span{
+      display:block;
+      font-size:34px;
+      font-weight:850;
+      letter-spacing:0.02em;
+    }
+    .cd small{ color:var(--muted); }
+
+    .tiny{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+      margin:10px 0 0;
+      user-select:none;
+    }
+
+    .hidden{ display:none; }
+
+    /* Fade-in for opened card */
+    #opened{ opacity:0; transform: translateY(14px); }
+    #opened.show{
+      animation: cardIn 900ms cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    @keyframes cardIn{
+      to { opacity:1; transform: translateY(0); }
+    }
+
+    .block{
+      margin-top:22px;
+      padding-top:18px;
+      border-top:1px solid var(--line);
+    }
+
+    .message{
+      margin:0;
+      font-size:18px;
+      line-height:1.7;
+      white-space:pre-line;
+    }
+
+    .musicRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#ffffff12;
+      color:#fff;
+      cursor:pointer;
+      font-weight:800;
+    }
+    .btn:hover{ background:#ffffff1a; }
+    .clickableHint{ cursor:pointer; }
+  </style>
+</head>
+
+<body>
+  <div class="bgWrap">
+    <div id="bgGrid" class="bgGrid">
+      <div class="tile"><div class="layer"></div><div class="layer"></div></div>
+      <div class="tile"><div class="layer"></div><div class="layer"></div></div>
+      <div class="tile"><div class="layer"></div><div class="layer"></div></div>
+      <div class="tile"><div class="layer"></div><div class="layer"></div></div>
+    </div>
+
+    <div class="overlay"></div>
+    <canvas id="hearts"></canvas>
+  </div>
+
+  <audio id="bgm" preload="auto" loop playsinline></audio>
+
+  <main class="wrap">
+    <!-- LOCKED -->
+    <section id="locked" class="card">
+      <div class="badge">🔒 Kilitli</div>
+      <h1>Kalbimden sana… 💌</h1>
+
+      <div class="countdown" aria-live="polite">
+        <div class="cd"><span id="d">00</span><small>gün</small></div>
+        <div class="cd"><span id="h">00</span><small>saat</small></div>
+        <div class="cd"><span id="m">00</span><small>dk</small></div>
+        <div class="cd"><span id="s">00</span><small>sn</small></div>
+      </div>
+    </section>
+
+    <!-- OPENED -->
+    <section id="opened" class="card hidden">
+      <div class="badge open">🎆 Açıldı!</div>
+      <h1>Deniz & Ahsen — 2026 💌</h1>
+      <p class="tiny">01.01.2026</p>
+
+      <div class="musicRow">
+        <button id="musicBtn" class="btn hidden" type="button">▶ Müziği Başlat</button>
+        <span id="musicHint" class="tiny hidden clickableHint">Bitanem şarkı otomatik başlamadıysa buraya tıkla</span>
+      </div>
+
+      <section class="block">
+        <p class="message" id="message"></p>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    // Türkiye saati: 01.01.2026 00:00 (UTC+3)
+    // UTC: 31.12.2025 21:00:00Z
+    const TARGET_UTC_MS = Date.UTC(2025, 11, 31, 21, 0, 0);
+
+    const SETTINGS = {
+      SLIDE_MS: 3500,
+      FADE_MS: 1200,
+      BLUR_PX: 1.0,
+
+      // ✅ Performans için hafifletildi:
+      HEARTS_RATE_PER_SEC: 7,   // 18 -> 7
+      HEARTS_ALPHA: 0.28,       // biraz daha hafif
+      HEARTS_BURST: 10          // 28 -> 10
+    };
+
+    const ASSETS = {
+      photos: ["assets/1.jpg","assets/2.jpg","assets/3.jpg","assets/4.jpg"],
+      song: "assets/song.mp3",
+      message:
+`Ahsenim… 
+
+Yeni yıla girerken aklımdaki en güzel şey sensin. 
+Şuanlık uzak olsak bile, her zaman kalbimin en yakınında sen oldun. 
+2026’da da seni sevmek; iyi gününde de zor gününde de yanında olmak istiyorum. 
+O güzel gülüşünün daim olması yeni yıl dileğim. 
+
+Seni çok seviyorum, iyi ki varsın. 💗 
+
+— Deniz`    };
+
+    document.documentElement.style.setProperty("--blur", SETTINGS.BLUR_PX + "px");
+
+    const $ = (id) => document.getElementById(id);
+    const pad2 = (n) => String(n).padStart(2, "0");
+
+    function msToParts(ms){
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const s = total % 60;
+      const m = Math.floor(total / 60) % 60;
+      const h = Math.floor(total / 3600) % 24;
+      const d = Math.floor(total / 86400);
+      return { d, h, m, s };
+    }
+
+    // -------- 2x2 canlı kolaj --------
+    const bgGrid = $("bgGrid");
+    const tiles = Array.from(bgGrid.querySelectorAll(".tile")).map(tile => {
+      const layers = tile.querySelectorAll(".layer");
+      return { front: layers[0], back: layers[1], currentSrc: null };
+    });
+
+    function setInitialImages(){
+      tiles.forEach((t, i) => {
+        const src = ASSETS.photos[i % ASSETS.photos.length];
+        t.front.style.backgroundImage = `url('${src}')`;
+        t.front.style.opacity = 1;
+        t.back.style.opacity = 0;
+        t.currentSrc = src;
+      });
+    }
+
+    function crossfadeTo(tileObj, nextSrc){
+      if (tileObj.currentSrc === nextSrc) return;
+
+      tileObj.back.style.backgroundImage = `url('${nextSrc}')`;
+      tileObj.back.style.opacity = 1;
+      tileObj.front.style.opacity = 0;
+
+      const oldFront = tileObj.front;
+      tileObj.front = tileObj.back;
+      tileObj.back = oldFront;
+      tileObj.currentSrc = nextSrc;
+
+      setTimeout(() => { tileObj.back.style.opacity = 0; }, SETTINGS.FADE_MS + 50);
+    }
+
+    let step = 0;
+    function startCollageSwap(){
+      setInitialImages();
+      setInterval(() => {
+        step = (step + 1) % ASSETS.photos.length;
+        tiles.forEach((t, i) => {
+          const src = ASSETS.photos[(i + step) % ASSETS.photos.length];
+          crossfadeTo(t, src);
+        });
+      }, SETTINGS.SLIDE_MS);
+    }
+
+    // -------- Müzik autoplay dene, olmazsa fallback --------
+    function armGestureAutoplay(playFn){
+      const handler = async () => { await playFn(); };
+      window.addEventListener("pointerdown", handler, { once:true, passive:true });
+      window.addEventListener("keydown", handler, { once:true });
+    }
+
+    async function forcePlayMusic(){
+      const bgm = $("bgm");
+      bgm.src = ASSETS.song;
+      bgm.volume = 0.9;
+      bgm.currentTime = 0;
+
+      const tryAgain = async () => {
+        try{
+          await bgm.play();
+          $("musicBtn").classList.add("hidden");
+          $("musicHint").classList.add("hidden");
+        }catch(_){}
+      };
+
+      try{
+        await bgm.play();
+        $("musicBtn").classList.add("hidden");
+        $("musicHint").classList.add("hidden");
+        return true;
+      }catch(e){
+        $("musicBtn").classList.remove("hidden");
+        $("musicHint").classList.remove("hidden");
+
+        $("musicBtn").onclick = tryAgain;
+        $("musicHint").onclick = tryAgain;
+        armGestureAutoplay(tryAgain);
+        return false;
+      }
+    }
+
+    // -------- Sonsuz kalp animasyonu (hafif) --------
+    function startHearts(){
+      const canvas = $("hearts");
+      const ctx = canvas.getContext("2d");
+
+      function resize(){
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = window.innerWidth + "px";
+        canvas.style.height = window.innerHeight + "px";
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+      }
+      resize();
+
+      const hearts = [];
+      let lastSpawn = performance.now();
+
+      function spawn(atTop=false){
+        hearts.push({
+          x: Math.random() * window.innerWidth,
+          y: atTop ? (Math.random() * window.innerHeight * 0.6) : (window.innerHeight + 10),
+          vx: (-0.25 + Math.random()*0.5),
+          vy: (-1.0 - Math.random()*1.2),
+          life: 0,
+          // ✅ daha kısa ömür = ekranda birikmez = daha az kasma
+          maxLife: 1600 + Math.random()*900,
+          size: 13 + Math.random()*9,
+          rot: (-0.25 + Math.random()*0.5),
+          vr: (-0.01 + Math.random()*0.02)
+        });
+      }
+
+      for(let i=0;i<SETTINGS.HEARTS_BURST;i++) spawn(true);
+
+      function drawHeart(h){
+        ctx.save();
+        ctx.translate(h.x, h.y);
+        ctx.rotate(h.rot);
+        ctx.globalAlpha = SETTINGS.HEARTS_ALPHA * (1 - (h.life / h.maxLife));
+        ctx.font = `${h.size}px ui-sans-serif, system-ui, Arial`;
+        ctx.fillText("💗", -h.size/2, 0);
+        ctx.restore();
+      }
+
+      function frame(t){
+        const interval = 1000 / SETTINGS.HEARTS_RATE_PER_SEC;
+        while (t - lastSpawn > interval){
+          spawn(false);
+          lastSpawn += interval;
+        }
+
+        // ✅ canvas boyutu ile temizle (ufak performans artışı)
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        for (let i=hearts.length-1; i>=0; i--){
+          const h = hearts[i];
+          h.life += 16;
+          h.x += h.vx;
+          h.y += h.vy;
+          h.rot += h.vr;
+
+          drawHeart(h);
+
+          if (h.life >= h.maxLife || h.y < -60){
+            hearts.splice(i,1);
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+
+      window.addEventListener("resize", resize, { passive:true });
+      requestAnimationFrame(frame);
+    }
+
+    function renderOpened(){
+      $("message").textContent = ASSETS.message;
+    }
+
+    function openGift(){
+      document.body.classList.add("unlocked");
+      $("locked").classList.add("hidden");
+
+      const opened = $("opened");
+      opened.classList.remove("hidden");
+      requestAnimationFrame(() => opened.classList.add("show"));
+
+      bgGrid.classList.add("zoom");
+
+      renderOpened();
+      forcePlayMusic();
+      startHearts();
+    }
+
+    function tick(){
+      const diff = TARGET_UTC_MS - Date.now();
+
+      if (diff <= 0){
+        openGift();
+        clearInterval(timer);
+        return;
+      }
+
+      const { d, h, m, s } = msToParts(diff);
+      $("d").textContent = pad2(d);
+      $("h").textContent = pad2(h);
+      $("m").textContent = pad2(m);
+      $("s").textContent = pad2(s);
+    }
+
+    // Başlat
+    startCollageSwap();
+    const timer = setInterval(tick, 250);
+    tick();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
